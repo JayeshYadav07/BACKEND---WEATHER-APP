@@ -1,5 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const { authenticate } = require("../middleware/authenticate");
 const jwt = require("jsonwebtoken");
 const fetch = (...args) =>
     import("node-fetch").then(({ default: fetch }) => fetch(...args));
@@ -70,8 +71,9 @@ UserRouter.get("/logout", async (req, res) => {
         res.status(404).send({ msg: error.message });
     }
 });
-UserRouter.get("/getWeather", async (req, res) => {
+UserRouter.get("/getWeather", authenticate, async (req, res) => {
     const { city } = req.query;
+    
     let url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
     const response = await fetch(url, {
         method: "get",
@@ -79,9 +81,9 @@ UserRouter.get("/getWeather", async (req, res) => {
     });
     const data = await response.json();
     res.send({
-        "City": data.name,
-        "Weather": data.weather[0].main,
-        "Temperature": data.main.temp,
+        City: data.name,
+        Weather: data.weather[0].main,
+        Temperature: data.main.temp,
     });
 });
 module.exports = { UserRouter };
