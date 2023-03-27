@@ -1,9 +1,12 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const fetch = (...args) =>
+    import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const { createClient } = require("redis");
 const { UserModel } = require("../model/UserModel");
 require("dotenv").config();
+const apiKey = process.env.API_KEY;
 const UserRouter = express.Router();
 
 UserRouter.post("/signup", async (req, res) => {
@@ -67,5 +70,18 @@ UserRouter.get("/logout", async (req, res) => {
         res.status(404).send({ msg: error.message });
     }
 });
-
+UserRouter.get("/getWeather", async (req, res) => {
+    const { city } = req.query;
+    let url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+    const response = await fetch(url, {
+        method: "get",
+        headers: { "Content-Type": "application/json" },
+    });
+    const data = await response.json();
+    res.send({
+        "City": data.name,
+        "Weather": data.weather[0].main,
+        "Temperature": data.main.temp,
+    });
+});
 module.exports = { UserRouter };
